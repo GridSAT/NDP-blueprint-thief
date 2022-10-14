@@ -1,0 +1,2 @@
+the file c8blif.txt_3CNF.txt hangs at set #69873 when executed using -lou option, investigate.
+

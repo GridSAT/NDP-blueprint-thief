@@ -1,0 +1,81 @@
+// The CNF Tree
+digraph {
+	1 [label="1\n(3 | -5 | 6) & (1 | 3 | 8) & (2 | 5 | -7) & (1 | 4 | 8) & (3 | 8 | 9)\n(3 | -5 | 6) & (1 | 3 | 8) & (2 | 5 | -7) & (1 | 4 | 8) & (3 | 8 | 9)" color=black]
+	1 -> 2
+	2 [label="2\n(2 | 5 | -7) & (1 | 4 | 8)\n(2 | 5 | -7) & (1 | 4 | 8)" color=black]
+	1 -> 3
+	3 [label="3\n(-5 | 6) & (1 | 8) & (2 | 5 | -7) & (1 | 4 | 8) & (8 | 9)\n(-5 | 6) & (1 | 8) & (2 | 5 | -7) & (1 | 4 | 8) & (8 | 9)" color=black]
+	2 -> 4
+	4 [label="4\n(1 | 4 | 8)\n(1 | 4 | 8)" color=black]
+	2 -> 5
+	5 [label="5\n(5 | -7) & (1 | 4 | 8)\n(5 | -7) & (1 | 4 | 8)" color=black]
+	3 -> 6
+	6 [label="6\n(6) & (1 | 8) & (1 | 4 | 8) & (8 | 9)\n(6) & (1 | 8) & (1 | 4 | 8) & (8 | 9)" color=black]
+	3 -> 7
+	7 [label="7\n(1 | 8) & (2 | -7) & (1 | 4 | 8) & (8 | 9)\n(1 | 8) & (2 | -7) & (1 | 4 | 8) & (8 | 9)" color=black]
+	4 -> 8
+	8 [label="8\nT"]
+	4 -> 9
+	9 [label="9\n(4 | 8)\n(4 | 8)" color=black]
+	5 -> 10
+	10 [label="10\n(1 | 4 | 8)\n(1 | 4 | 8)" color=red]
+	5 -> 11
+	11 [label="11\n(-7) & (1 | 4 | 8)\n(-7) & (1 | 4 | 8)" color=black]
+	6 -> 12
+	12 [label="12\n(1 | 8) & (1 | 4 | 8) & (8 | 9)\n(1 | 8) & (1 | 4 | 8) & (8 | 9)" color=black]
+	6 -> 13
+	13 [label="13\nF"]
+	7 -> 14
+	14 [label="14\n(2 | -7) & (8 | 9)\n(2 | -7) & (8 | 9)" color=black]
+	7 -> 15
+	15 [label="15\n(8) & (2 | -7) & (4 | 8) & (8 | 9)\n(8) & (2 | -7) & (4 | 8) & (8 | 9)" color=black]
+	9 -> 16
+	16 [label="16\nT"]
+	9 -> 17
+	17 [label="17\n(8)\n(8)" color=black]
+	11 -> 18
+	18 [label="18\nF"]
+	11 -> 19
+	19 [label="19\n(1 | 4 | 8)\n(1 | 4 | 8)" color=red]
+	12 -> 20
+	20 [label="20\n(8 | 9)\n(8 | 9)" color=black]
+	12 -> 21
+	21 [label="21\n(8) & (4 | 8) & (8 | 9)\n(8) & (4 | 8) & (8 | 9)" color=black]
+	14 -> 22
+	22 [label="22\n(8 | 9)\n(8 | 9)" color=red]
+	14 -> 23
+	23 [label="23\n(-7) & (8 | 9)\n(-7) & (8 | 9)" color=black]
+	15 -> 24
+	24 [label="24\n(2 | -7)\n(2 | -7)" color=black]
+	15 -> 25
+	25 [label="25\nF"]
+	17 -> 26
+	26 [label="26\nT"]
+	17 -> 27
+	27 [label="27\nF"]
+	20 -> 28
+	28 [label="28\nT"]
+	20 -> 29
+	29 [label="29\n(9)\n(9)" color=black]
+	21 -> 30
+	30 [label="30\nT"]
+	21 -> 31
+	31 [label="31\nF"]
+	23 -> 32
+	32 [label="32\nF"]
+	23 -> 33
+	33 [label="33\n(8 | 9)\n(8 | 9)" color=red]
+	24 -> 34
+	34 [label="34\nT"]
+	24 -> 35
+	35 [label="35\n(-7)\n(-7)" color=black]
+	29 -> 36
+	36 [label="36\nT"]
+	29 -> 37
+	37 [label="37\nF"]
+	35 -> 38
+	38 [label="38\nF"]
+	35 -> 39
+	39 [label="39\nT"]
+	stats [label="Input set processed in 0.183 seconds\nProblem ID: 4fb7aa4e244a8b3f3d2f0f139afe0fbf8d4e507e\nSolution mode: NORMAL\nTotal number of nodes: 39\nNumber of unique nodes: 19\nNumber of redundant subtrees: 4\nNumber of leaves nodes: 16\nCurrent memory usage: 17.6MiB" shape=record style=dotted]
+}

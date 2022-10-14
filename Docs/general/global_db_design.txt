@@ -1,0 +1,27 @@
+Closure table:
+
+In this method, So we have two tables:
+	Nodes: id, set, parent_id
+	TreePaths: ancestor, descendant, length
+	
+If the tree has N nodes total and we assuming as worst case a full binary tree, then each node of the last level will have log2 N entries in the TreePaths table. 
+So, if we have one million node, each node will have 20 entries, which is not bad at all. So total of 20 million entries in the TreePaths, which has a very compact columns.
+
+
+- Query the number of nodes: Easy. 
+	Select COUNT(descendants) from TreePaths where ancestor = [root id]  (trade space vs processing time)
+	
+- Insert a child, child of [pid]: 
+	INSERT INTO Nodes (id, set)
+	INSERT INTO TreePaths (ancestor, descendant, length) (Select ancestor, [id], length+1 where descendant = [pid])
+	INSERT INTO TreePaths (ancestor, descendant, length) (Select [pid], [id], 1)
+
+- Reconstructing the tree of [id]:	
+	all_ids = SELECT descendant from TreePaths where ancestor = [id] UNION ALL [id]
+	parent_children = SELECT ancestor, CONCAT(descendant, ',') from TreePaths GroupBy ancestor WHERE length = 1 AND ancestor IN (all_ids)	# (root, [2,3]), (2, [4,5])
+	all_nodes = SELECT id, body from Nodes where id IN (all_ids) 
+	Then, in python we can run a code that runs fast to do this.
+	start from root node, recursevily create nodes.
+	
+
+	
