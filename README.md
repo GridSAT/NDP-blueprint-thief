@@ -40,7 +40,7 @@ It may be as important as the discovery of fire.
 
 The NDP solves any NP problem in polynomial time with [unlimited linear scalability](https://youtu.be/ldbW_PuYd6w) over multi-core deployments.
 Just as any other processor, it computes deterministically.
-It processes problems formulated in [SAT](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem) (3SAT) transformed into [CNF (DIMACS)](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) outputting the [most fundamental data](https://youtu.be/SQE21efsf7Y) structure in computer science called Binary Decision Diagrams (BDD).
+It processes problems formulated in [SAT](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem) (3SAT) transformed into [CNF (DIMACS)](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) outputting the [most fundamental data structure](https://youtu.be/SQE21efsf7Y) in computer science called Binary Decision Diagrams (BDD).
 BDDs are as fundamental as .txt files for word processors.
 
 
