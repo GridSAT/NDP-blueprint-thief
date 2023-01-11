@@ -27,7 +27,7 @@ NDP is the abbreviation for [Non-Deterministic Processor](https://sites.google.c
 One of the most important questions in theoretical computer science was the [P vs. NP problem](https://en.wikipedia.org/wiki/P_vs._NP_problem) asking how difficult it is to simulate non-deterministic computation with a deterministic computer.
 The class NP represented problems with no known polynomial-time solution, but if given a solution, it was verifiable to be correct within polynomial time.
 It was called non-deterministic polynomial because a non-deterministic machine could solve it in polynomial time.
-NP problems were beyond computability, incl. but not limited to quantum computation which [itself](https://www.nature.com/articles/s41534-017-0035-1.pdf) is [NP-complete[(https://iopscience.iop.org/article/10.1088/1367-2630/16/3/033027/pdf).
+NP problems were beyond computability, incl. but not limited to quantum computation which [itself](https://www.nature.com/articles/s41534-017-0035-1.pdf) is [NP-complete](https://iopscience.iop.org/article/10.1088/1367-2630/16/3/033027/pdf).
 
 
 ### Impact:
@@ -40,14 +40,14 @@ It may be as important as the discovery of fire.
 
 The NDP solves any NP problem in polynomial time with [unlimited linear scalability](https://youtu.be/ldbW_PuYd6w) over multi-core deployments.
 Just as any other processor, it computes deterministically.
-It processes problems formulated in [SAT](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem) (3SAT) transformed into [CNF (DIMACS)](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) outputting the [most fundamental data](https://youtu.be/SQE21efsf7Y.) structure in computer science called Binary Decision Diagrams (BDD).
+It processes problems formulated in [SAT](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem) (3SAT) transformed into [CNF (DIMACS)](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) outputting the [most fundamental data](https://youtu.be/SQE21efsf7Y) structure in computer science called Binary Decision Diagrams (BDD).
 BDDs are as fundamental as .txt files for word processors.
 
 
 ### Theoretical background:
 
 Recalling that BDDs are graph representations of boolean functions with with 2^n+1 -1 nodes being equivalent to the complete [truth table](https://en.wikipedia.org/wiki/Truth_table), we can collapse the tree in such a way, that the function can still be evaluated in the same manner, yet the resulting acyclic digraph (BDD) may be much smaller.
-Accordingly [it is known and has been severally demonstrated](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjMhYGjhY78AhUERvEDHdfLAd0QFnoECA0QAQ&url=http%3A%2F%2Fwww.cs.ucr.edu%2F~skulhari%2FStaticHeuristics.pdf&usg=AOvVaw2_x28--RmUggL_cSZWB6mM), that the variable ordering of the respective input set can significantly impact the size of a BDD (i.e., the efficiency of generating the BDD). 
+Accordingly [it is known and has been severally demonstrated](http://alumni.cs.ucr.edu/~skulhari/StaticHeuristics.pdf), that the variable ordering of the respective input set can significantly impact the size of a BDD (i.e., the efficiency of generating the BDD). 
 The variable ordering problem can therefore be viewed as determining a permutation of the input variables that provides the sequence representing these implicants efficiently and keeping the size of the resulting BDD minimal.
 
 However it is further known, that finding an [optimal variable order is NP-complete](https://ieeexplore.ieee.org/document/537122).
