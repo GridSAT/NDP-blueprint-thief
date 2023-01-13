@@ -50,7 +50,7 @@ Recalling that BDDs are graph representations of boolean functions with with 2^n
 Accordingly [it is known and has been severally demonstrated](http://alumni.cs.ucr.edu/~skulhari/StaticHeuristics.pdf), that the variable ordering of the respective input set can significantly impact the size of a BDD (i.e., the efficiency of generating the BDD). 
 The variable ordering problem can therefore be viewed as determining a permutation of the input variables that provides the sequence representing these implicants efficiently and keeping the size of the resulting BDD minimal.
 
-However it is further known, that finding an [optimal variable order is NP-complete](https://ieeexplore.ieee.org/document/537122).
+However it is further known, that finding an [optimal variable order is NP-complete](https://ieeexplore.ieee.org/document/537122) and that OBDD lower bounds for some special functions seemed to be exponential [independant of any variable ordering](https://www.researchgate.net/publication/3042737_On_the_complexity_of_VLSI_implementations_and_graph_representationsof_Boolean_functions_with_application_to_integer_multiplication).
 
 Non-withstanding of these OBDD functions, the NDP bypasses those exponential lower bounds through [equisatisfiable translations](https://en.wikipedia.org/wiki/Equisatisfiability) enabling BDD sizes approximated by O(M^4), where M is the number of clauses of a CNF representation of the function. The average case fittings for FACT and MULT are even much more efficient when generating the CNF-input with [Paul Purdom and Amr Sabry ’s transformation](https://cgi.luddy.indiana.edu/~sabry/cnf.html). 
 
