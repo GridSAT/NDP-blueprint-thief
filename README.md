@@ -1,4 +1,3 @@
-<!--
 #	README.md
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
@@ -17,13 +16,12 @@
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - info@gridsat.io
+#	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
--->
 
 ### Concept:
 
-NDP is the abbreviation for [Non-Deterministic Processor](https://sites.google.com/site/theuniverseofproblems/complexity/np).
+NDP is the abbreviation for [Non-Deterministic Processor](https://en.wikipedia.org/wiki/Nondeterministic_Turing_machine).
 One of the most important questions in theoretical computer science was the [P vs. NP problem](https://en.wikipedia.org/wiki/P_vs._NP_problem) asking how difficult it is to simulate non-deterministic computation with a deterministic computer.
 The class NP represented problems with no known polynomial-time solution, but if given a solution, it was verifiable to be correct within polynomial time.
 It was called non-deterministic polynomial because a non-deterministic machine could solve it in polynomial time.
@@ -33,7 +31,7 @@ NP problems were beyond computability, incl. but not limited to quantum computat
 ### Impact:
 
 An NDP makes the [whole internet look like a footnote in history](https://www.researchgate.net/publication/220423686_The_Status_of_the_P_versus_NP_problem).
-It may be as important as the discovery of fire.
+It may be [as important as the discovery of fire](https://youtu.be/kiL-xAGQ8yQ?si=ttb6MWLfCxocXFTA).
 
 
 ### Implementation:
@@ -104,7 +102,7 @@ cd /path/pattern_solvers
 
 source pattern_solvers/bin/activate
 
-pip install -r requirements
+pip install -r requirements.txt
 ```
 
 
