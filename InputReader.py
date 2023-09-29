@@ -1,4 +1,3 @@
-<!--
 #	InputReader.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
@@ -17,9 +16,8 @@
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - info@gridsat.io
+#	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
--->
 
 # This is InputReader class
 # SLF: Single Line Format, is where the input CNF in represented in one line only in the form:
