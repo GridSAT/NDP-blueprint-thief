@@ -1,13 +1,13 @@
 #	main.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +15,7 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
 
@@ -32,6 +32,9 @@ from InputReader import InputReader
 import configs
 import traceback
 from Factorizer import Factorizer
+import ray
+
+ray.init(address='auto', ignore_reinit_error=True)
 
 # todo: 
 # - Handle if input has [x, -x]. What I did now is to normalize the clause once it get read. However, this will not enable us to 
@@ -155,6 +158,7 @@ if __name__ == "__main__":
     parser.add_argument("-gdb", "--use-global-db", help="Use database for set lookup in global sets table", action="store_true")
     parser.add_argument("-gnm", "--gdb-no-mem", help="Don't load hashes from global DB into memory. Use this only if gdb gets huge and doesn't fit in memory. (slower)", action="store_true")
     parser.add_argument("-z", "--sort-by-size", help="Always sort clauses by size in ascending order.", action="store_true")
+    parser.add_argument("-sm", "--start-mode", help="Use mode while prepare sub-processes (options as -m)", choices=['flo', 'flop', 'lo', 'lou', 'normal'], default=None)
     parser.add_argument("-thief", "--thief-method", help="Always sort clauses by length and initial index.", action="store_true")
     parser.add_argument("-fact", "--factorize", help="Factorize a number.", action="store_true")
     parser.add_argument("-mult", "--multiply", nargs=2, type=int, help="Multiply two numbers.")
@@ -255,7 +259,9 @@ if __name__ == "__main__":
     elif args.quiet:
         logger.setLevel(logging.CRITICAL)
 
+    if args.start_mode is None:
+        args.start_mode = args.mode
+
     Main(args)
     
     logger.info('script took %.3f seconds' % (time.time() - start_time))
-
