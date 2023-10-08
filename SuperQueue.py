@@ -1,13 +1,13 @@
 #	SuperQueue.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,10 +15,12 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
 
+import hashlib
+import re
 import time
 import Set
 from DbAdaptor import DbAdapter
@@ -34,28 +36,29 @@ from ordered_set import OrderedSet
 
 class SuperQueue:
 
+    db = None
     use_runtime_db = False
 
-    def __init__(self, unique_queue=False, use_runtime_db=False, problem_id=PROBLEM_ID):
+    def __init__(self, name="", unique_queue=False, use_runtime_db=False, problem_id=PROBLEM_ID):
 
         self.unique_queue = unique_queue
-        if unique_queue:            
+        if unique_queue:
             self.objqueue = OrderedSet()
             self.idsqueue = OrderedSet()   # queue of objects ids
         else:
             self.objqueue = deque()   # queue of objects
             self.idsqueue = deque()   # queue of objects ids
-                            
-        self.table_name = "queue_{}_{}".format(problem_id, str(time.time()).replace(".", ""))
+
+        self.table_name = "queue_" + hashlib.sha224("{}_{}_{}".format(re.sub(r'[\(\)\{\}# ]', '', name), problem_id, str(time.time()).replace(".", "")).encode()).hexdigest()
         self.use_runtime_db = use_runtime_db
         if use_runtime_db:
             self.db = DbAdapter()
             self.db.rtq_create_table(self.table_name)
-        
+
 
     def __del__(self):
         #drop table
-        if self.use_runtime_db:
+        if self.use_runtime_db and self.db is not None:
             self.db.rtq_cleanup(self.table_name)
 
     def insert(self, item):
@@ -70,11 +73,11 @@ class SuperQueue:
                 self.db.rtq_insert_set(self.table_name, item.id, item.to_string(pretty=False), item.serialize_properties())
             else:
                 self.objqueue.append(item)
-            
+
         return True
 
     def pop(self):
-        item = None        
+        item = None
         if self.use_runtime_db:
             objid = None
             if self.unique_queue:
@@ -105,3 +108,10 @@ class SuperQueue:
 
     def is_empty(self):
         return not bool(self.size())
+
+    def relink_db(self):
+        if self.use_runtime_db:
+            self.db = DbAdapter()
+
+    def unlink_db(self):
+        self.db = None
