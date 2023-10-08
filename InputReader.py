@@ -1,13 +1,13 @@
 #	InputReader.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,15 +15,9 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
-
-# This is InputReader class
-# SLF: Single Line Format, is where the input CNF in represented in one line only in the form:
-#    a | b | c & d | -e | f & ...
-# DIMAC: DIMACS (the Center for Discrete Mathematics and Theoretical Computer Science) at Rutgers university format
-# Information about the format can be found at https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
 
 # This is InputReader class
 # SLF: Single Line Format, is where the input CNF in represented in one line only in the form:
@@ -170,6 +164,3 @@ class InputReader:
 
         else:
             raise Exception("Unknown input source")
-            
-            
-
