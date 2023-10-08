@@ -1,7 +1,7 @@
 README.md
 
 Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-Copyright (c) 2022 GridSAT Stiftung
+Copyright (c) 2023 GridSAT Stiftung
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,6 @@ GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ 
 
 
 
-
 ### Concept:
 
 NDP is the abbreviation for [Non-Deterministic Processor](https://en.wikipedia.org/wiki/Nondeterministic_Turing_machine).
@@ -33,7 +32,7 @@ NP problems were beyond computability, incl. but not limited to quantum computat
 ### Impact:
 
 An NDP makes the [whole internet look like a footnote in history](https://www.researchgate.net/publication/220423686_The_Status_of_the_P_versus_NP_problem).
-It may be [as important as the discovery of fire](https://youtu.be/kiL-xAGQ8yQ?si=ttb6MWLfCxocXFTA).
+It may be [as important as the discovery of fire](https://youtu.be/kiL-xAGQ8yQ).
 
 
 ### Implementation:
@@ -74,42 +73,115 @@ Putting this feature of classic Arabic into action for SAT processing reveals se
 Please check the [Resources](https://gridsat.eth.link/resources.html) on this site for a comprehensive and authentic overview.
 
 
+
+### Non-Deterministic Processor (NDP) blueprint with Ray
+
 ### Installation
 
-##### Prepare system virtual environment (virtualenv)
+##### Prepare system virtualenv
 
 On linux run as root
 
 ```bash
-apt install python3-pip libpq-dev
+apt install python3-pip libpq-dev sysstat
 ```
 
-##### Create virtual environment (virtualenv)
+##### Create virtualenv
 
 Log-in as user and run
 
 ```bash
-cd /path/pattern_solvers
+cd <path_to_directory>
 
-virtualenv pattern_solvers
+virtualenv <dir_name>
 ```
 
 
-### Activate and update virtual environment (virtualenv)
+### Activate and update virtualenv
 
 Login as user and run
 
 ```bash
-cd /path/pattern_solvers
+cd <path_to_directory>
 
-source pattern_solvers/bin/activate
+source <dir_name>/bin/activate
 
 pip install -r requirements.txt
 ```
 
+### Install Ray
 
-### Run solver
+https://github.com/ray-project/ray
+
+### Startup the RAY nodes to allow multi-processing on cluster
+
+Using [ray](https://docs.ray.io) for upscaling the showcase.
+
+The installation is already done after pip install from previous steps
+
+##### Start the head node
 
 ```bash
-python3 main.py -v -d inputs/Multi11bit.txt -m lou -t 8
+export RAY_DISABLE_IMPORT_WARNING=1
+CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 4 ))
+ray start --head --include-dashboard=false --num-gpus=0 --num-cpus=$CPUS
+```
+
+##### Start the additional nodes
+
+```bash
+export RAY_DISABLE_IMPORT_WARNING=1
+CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 4 ))
+ray start --include-dashboard=false --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gpus=0 --num-cpus=$CPUS
+```
+
+To add more worker nodes just run same on additional nodes
+
+
+
+### Run solver (e.g. DIMACS format with l.o.u. condition in verbos on 8 cores)
+
+```bash
+python3 main.py -v -d inputs/[CNF/DIMACS] -m lou -t 8
+```
+
+The main process connects automatically to the head node and uses workers as available.
+
+### Run solver for FACT or MULT most efficiently (e.g. DIMACS format with l.o.u. condition and thief-method in verbos on 8 cores)
+
+```bash
+python3 main.py -v -d inputs/[CNF/DIMACS in Sabry-format] -m lou -thief -t 8
+```
+
+The main process connects automatically to the head node and uses workers as available.
+
+
+
+### Starter tools
+
+Some helpers to easily run the processes and environments (e.g. AWS):
+
+```bash
+
+# .bin/ray.sh
+sudo su - [user_name]
+
+# .bin/ray-auto.sh
+sudo -u [user_name] -i /bin/bash -i -c ray-auto.sh
+
+# .bin/node.sh
+ssh -i $HOME/.ssh/AWS.pem "node$1"
+
+# .bin/node-up.sh
+ssh -i $HOME/.ssh/AWS.pem "node$1" -t .bin/ray-auto.sh
+
+# run and log unbuffered (need expect-dev installed)
+CORES="0001"; BITS="14"; ( echo "START: `date`"; echo ""; unbuffer python3 main.py -v -d inputs/Multi"$BITS"bit.txt -m lou -t $CORES 2>/dev/null ; echo "" ; echo "ENDE: `date`" ) | tee logs/$(date "+%Y-%m-%d")_Multi"$BITS"bit-$CORES-Cores.txt
+
+# run and start on [HEADNODE]
+cd $HOME/myDirectory; source __venv__/bin/activate ; PATH=$PATH:/home/myDirectory/bin ray-auto.sh [HEADNODE] 8
+
+# run and start on a [NODE]
+cd $HOME/myDirectory; source __venv__/bin/activate ; PATH=$PATH:/home/myDirectory/bin ray-auto.sh [NODE] 22
+
 ```
