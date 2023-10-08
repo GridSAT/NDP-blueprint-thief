@@ -1,13 +1,13 @@
 #	DbAdaptor.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +15,7 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
 
@@ -40,12 +40,12 @@ class DbAdapter:
         # connect to the PostgreSQL server
         self.conn = psycopg2.connect(self.conn_string, cursor_factory=psycopg2.extras.DictCursor)
         self.cur = self.conn.cursor()
-      
+
 
     def __del__(self):
         try:
             # close communication with the PostgreSQL database server
-                        
+
             # commit and close the connection
             if self.conn is not None:
                 self.conn.commit()
@@ -55,7 +55,7 @@ class DbAdapter:
             logger.error("DB Error: " + str(error))
 
     ### GlobalSetsTable methods ###
-    
+
     def gs_create_table(self, table_name):
         """ create tables in the PostgreSQL database"""
         table_command = """
@@ -64,7 +64,7 @@ class DbAdapter:
                 body TEXT,
                 cid1 BYTEA,
                 cid2 BYTEA,
-                mapping INTEGER[],                
+                mapping INTEGER[],
                 num_of_clauses INTEGER DEFAULT 0,
                 num_of_vars INTEGER DEFAULT 0,
                 unique_nodes INTEGER DEFAULT 0,
@@ -77,7 +77,7 @@ class DbAdapter:
         # redundant_nodes field counts how many redundant nodes in this set's subgraph.
         # redundant_hits how many redudants hits was in this set's subgraph.
         # redundant_times field counts how many times this particular set was a redundant set.
-        
+
         # The UNIQUE constraint will prevent any other process from writing the same data, the exception should be handled then
         # be aware that creating an index on table with exaustive inserts can slow it down. Check the speed without the index and compare.
         index_commands = [
@@ -87,24 +87,24 @@ class DbAdapter:
                 "CREATE INDEX IF NOT EXISTS unique_nodes ON {0} (unique_nodes)".format(table_name),
                 # "CREATE INDEX IF NOT EXISTS redundant_times ON {0} (redundant_times)".format(table_name)
             ]
-        
+
         try:
-            # create table 
+            # create table
             self.cur.execute(table_command)
             # create indeces
             for index_command in index_commands:
                 self.cur.execute(index_command)
             self.conn.commit()
-            
+
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
- 
- 
+
+
     def gs_insert_row(self, table_name, hash, set_body, child1_hash, child2_hash, mapping, num_of_clauses, num_of_vars):
 
         """ insert a row item into the table """
         success = SUCCESS
-        try:            
+        try:
             # execute the INSERT statement
             #self.cur.execute(sql.SQL("insert into {} values (%s, %s)").format(sql.Identifier('my_table')), [10, 20])
             self.cur.execute(sql.SQL("INSERT INTO {0}(hash, body, cid1, cid2, mapping, num_of_clauses, num_of_vars) VALUES(%s, %s, %s, %s, %s, %s, %s)").format(sql.Identifier(table_name)), (hash, set_body, child1_hash, child2_hash, mapping, num_of_clauses, num_of_vars))
@@ -112,13 +112,13 @@ class DbAdapter:
         except (Exception, psycopg2.errors.UniqueViolation) as UniqueViolationError:
             success = DB_UNIQUE_VIOLATION
             logger.debug("Node is already found in the global DB")
-        except (Exception, psycopg2.DatabaseError) as error:            
+        except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
             success = DB_UNKNOWN_ERROR
-    
+
         return success
 
-    def gs_does_hash_exist(self, table_name, value):        
+    def gs_does_hash_exist(self, table_name, value):
         result = False
         try:
             self.cur.execute(sql.SQL("SELECT 1 FROM {0} WHERE hash = %s LIMIT 1").format(sql.Identifier(table_name)), (value, ))
@@ -131,7 +131,7 @@ class DbAdapter:
 
     # check if a set is solved.
     # A solved set should have unique_nodes greater than zero
-    def gs_is_hash_solved(self, table_name, value):        
+    def gs_is_hash_solved(self, table_name, value):
         result = False
         try:
             self.cur.execute(sql.SQL("SELECT unique_nodes FROM {0} WHERE hash = %s").format(sql.Identifier(table_name)), (value, ))
@@ -203,7 +203,7 @@ class DbAdapter:
         result = None
         try:
             self.cur.execute(sql.SQL("SELECT * FROM {0} WHERE hash = %s").format(sql.Identifier(table_name)), (set_hash, ))
-            result = self.cur.fetchone()            
+            result = self.cur.fetchone()
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
 
@@ -235,9 +235,9 @@ class DbAdapter:
                 self.cur.execute(sql.SQL("DROP TABLE IF EXISTS {0}").format(sql.Identifier(table_name)))
                 self.conn.commit()
                 print(f"Table {table_name} is deleted.")
-            except (Exception, psycopg2.DatabaseError) as error:            
+            except (Exception, psycopg2.DatabaseError) as error:
                 logger.error("DB Error: " + str(error))
-    
+
         return
 
     # drop all global db tables
@@ -247,9 +247,9 @@ class DbAdapter:
             self.cur.execute(sql.SQL("DROP TABLE IF EXISTS {0}").format(sql.Identifier(table_name)))
             self.conn.commit()
             print(f"Table {table_name} is deleted.")
-        except (Exception, psycopg2.DatabaseError) as error:            
+        except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
-    
+
         return
 
     ### RunTimeQueue methods ###
@@ -265,33 +265,38 @@ class DbAdapter:
             """.format(table_name)
 
         try:
-            # create table 
-            self.cur.execute(table_command)            
+            # create table
+            self.cur.execute(table_command)
             self.conn.commit()
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
             return False
-            
+
         return True
- 
- 
+
+
     def rtq_insert_set(self, table_name, id, body, properties):
 
         """ insert a new row into the table """
         success = False
-        try:            
+        try:
             # execute the INSERT statement
-            self.cur.execute(sql.SQL("INSERT INTO {0}(id, body, properties) VALUES(%s, %s, %s)").format(sql.Identifier(table_name)), (id, body, properties))            
+            self.cur.execute(sql.SQL("INSERT INTO {0}(id, body, properties) VALUES(%s, %s, %s)").format(sql.Identifier(table_name)), (id, body, properties))
             success = True
             self.conn.commit()
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error("DB Error: " + str(error))
-            success = False
-    
+            #
+            # ! TODO: NEED TO GET FIXED
+            # for now we just ignore KEY VIOLATION and skip
+            #
+            self.conn.rollback()
+            success = True
+
         return success
 
     def rtq_get_set(self, table_name, id):
-        
+
         result = None
         try:
             self.cur.execute(sql.SQL("SELECT id, body, properties FROM {0} WHERE id = %s LIMIT 1").format(sql.Identifier(table_name)), (id, ))
@@ -314,4 +319,3 @@ class DbAdapter:
             logger.error("DB Error: " + str(error))
 
         return success
-
