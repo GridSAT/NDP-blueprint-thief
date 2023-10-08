@@ -1,13 +1,13 @@
 #	configs.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +15,7 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
 
@@ -31,11 +31,11 @@ INPUT_SLF = 2
 INPUT_DIMACS = 3
 
 # database
-DB_HOST="localhost"
+DB_HOST="node1"
 DB_PORT=5432
-DB_NAME="patternsolvers"
-DB_USER="mesaleh"
-DB_PASSWORD="951753saleh"
+DB_NAME="xps"
+DB_USER="xps"
+DB_PASSWORD="xps"
 GLOBAL_SETS_TABLE_PREFIX = "globalsetstable_"
 GLOBAL_SETS_TABLE = GLOBAL_SETS_TABLE_PREFIX
 
