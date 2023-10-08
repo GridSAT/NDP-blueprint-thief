@@ -84,32 +84,40 @@ On linux run as root
 apt install python3-pip libpq-dev
 ```
 
-##### Create virtual environment (virtualenv)
+##### Create virtualenv
 
 Log-in as user and run
 
 ```bash
-cd /path/pattern_solvers
+cd <path_to_directory>
 
-virtualenv pattern_solvers
+virtualenv <dir_name>
 ```
 
 
-### Activate and update virtual environment (virtualenv)
+### Activate and update virtualenv
 
 Login as user and run
 
 ```bash
-cd /path/pattern_solvers
+cd <path_to_directory>
 
-source pattern_solvers/bin/activate
+source <dir_name>/bin/activate
 
 pip install -r requirements.txt
 ```
 
 
-### Run solver
+### Run solver (e.g. DIMACS format with l.o.u. condition in verbos on 8 cores)
 
 ```bash
-python3 main.py -v -d inputs/Multi11bit.txt -m lou -t 8
+python3 main.py -v -d inputs/[CNF/DIMACS] -m lou -t 8
+```
+
+The main process connects automatically to the head node and uses workers as available.
+
+### Run solver for FACT or MULT most efficiently (e.g. DIMACS format with l.o.u. condition and thief-method in verbos on 8 cores)
+
+```bash
+python3 main.py -v -d inputs/[CNF/DIMACS in Sabry-format] -m lou -thief -t 8
 ```
