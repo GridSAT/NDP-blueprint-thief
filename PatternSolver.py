@@ -1,13 +1,13 @@
 #	PatternSolver.py
 #
 #	Non-Deterministic Processor (NDP) - efficient parallel SAT-solver
-#	Copyright (c) 2022 GridSAT Stiftung
+#	Copyright (c) 2023 GridSAT Stiftung
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU Affero General Public License as published by
 #	the Free Software Foundation, either version 3 of the License, or
 #	(at your option) any later version.
-
+#
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
 #	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +15,7 @@
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
 #	GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
 #
 
@@ -32,10 +32,9 @@ from DbAdaptor import DbAdapter
 import SuperQueue
 from Set import Set
 import traceback
-import threading
 import psycopg2
-import multiprocessing as mp
-import queue
+import math
+import ray
 
 
 # TODO:
@@ -55,7 +54,7 @@ import queue
 # * RunTimeQueue_{random int}: Which will contain the queue of nodes to be processed. This is an ephermal table that will be dropped at the end of execution. Each row has:
 #       - set_id   // PRIMARY, a number represent the order of the set to maintain breadth first evaluation
 #       - set_body (string repr. of the set)
-#       
+#
 
 # - Upon execution, load list of hashes from GlobalSetsTable for sets of no. of clauses <= no. of clauses of root input set. This would be "nodes seen" dict,
 # any new node will be add to the dict.
@@ -67,11 +66,11 @@ import queue
 TRUE_SET_HASH = Set.calculate_hash('T')
 FALSE_SET_HASH = Set.calculate_hash('F')
 
-CPU_COUNT = mp.cpu_count()
+CPU_COUNT = 2 # mp.cpu_count()
 
 # An object represent a node in the graph
 class Node:
-    
+
     def __init__(self):
         self.seen_count = 1
         self.parents = []
@@ -83,7 +82,39 @@ class Node:
         # one of its decendants is a redundant, but it could be redundant with another subgraph
         # has_potential_redundant is a flag that bubbles up from decendants to the parent.
         # if a parent node found two children with the flag set to True, it means it has a redundant node in its subgraph
-        self.has_potential_redundant = False     
+        self.has_potential_redundant = False
+
+@ray.remote
+class RemotePatternSolver():
+    def __init__(self, pattern_solver, name='', node=None):
+        self.pattern_solver = pattern_solver
+        self.name = name
+        self.node = node
+
+    def do_get_node_subgraph_stats(self, root_id, node_ids, nodes_children):
+        return self.pattern_solver.do_get_node_subgraph_stats(root_id, node_ids, nodes_children)
+
+    def process_nodes_queue(self, input_mode=None, dot=None, sort_by_size=False, thief_method=False, break_on_squeue_size=0):
+        return (self,) + self.pattern_solver.process_nodes_queue(self.node, input_mode, dot, generate_threads=False, name=self.name, is_sub_process=True, sort_by_size=sort_by_size, thief_method=thief_method, break_on_squeue_size=break_on_squeue_size)
+
+
+class PatternSolverArgs:
+    def __init__(self, args=None):
+        self.exit_upon_solving = args.exit_upon_solving if args else False
+        self.mode = args.mode if args else None
+        self.start_mode = args.start_mode if args else None
+        self.no_stats = args.no_stats if args else True
+        self.quiet = args.quiet if args else True
+        self.threads = args.threads if args else 0
+        self.use_global_db = args.use_global_db if args else False
+        self.use_runtime_db = args.use_runtime_db if args else False
+        self.output_graph_file = args.output_graph_file if args else None
+        self.output_solution_file = args.output_solution_file if args else None
+        self.verbos = args.verbos if args else False
+        self.verify = args.verify if args else False
+        self.very_verbos = args.very_verbos if args else False
+        self.sort_by_size = args.sort_by_size if args else False
+        self.thief_method = args.thief_method if args else False
 
 
 class PatternSolver:
@@ -100,7 +131,7 @@ class PatternSolver:
     solution = None
     global_table_name = GLOBAL_SETS_TABLE
 
-    def __init__(self, args=None, problem_id=PROBLEM_ID):        
+    def __init__(self, args=None, problem_id=PROBLEM_ID):
         self.args = args
 
         if problem_id:
@@ -114,7 +145,7 @@ class PatternSolver:
 
         if args.mode:
             self.global_table_name = GLOBAL_SETS_TABLE_PREFIX + args.mode.lower()
-    
+
         self.seen_sets.clear()
         self.reset()
 
@@ -125,10 +156,11 @@ class PatternSolver:
         self.nodes_stats = defaultdict(lambda: [0,0,0])
 
         # vars to calculate graph size at the end
-        self.uniques = self.redundant_hits = self.redundants = self.nodes_found_in_gdb = 0        
+        self.uniques = self.redundant_hits = self.redundants = self.nodes_found_in_gdb = 0
         self.redundant_ids = {}  # ids of redundant nodes
         self.nodes_children = {} # children ids for every node
 
+        self.started_processes = 0
         self.threads_count = 0
         self.start_creating_threads = False
         self.max_threads = 0
@@ -138,7 +170,7 @@ class PatternSolver:
         elif self.args.threads > 1:
             self.max_threads = self.args.threads
         self.threads = []
-        
+
     def draw_graph(self, dot, outputfile):
         fg = open(outputfile, "w")
         fg.write(dot.source)
@@ -153,13 +185,13 @@ class PatternSolver:
             self.seen_sets = {el:1 for el in unsolve_hashes}
             # combine solved and unsolved in seen_sets map
             self.seen_sets.update({el:1 for el in self.solved_sets.keys()})
-            
+
     def get_children_from_gdb(self, set_hash, db_adaptor=None):
         if db_adaptor == None:
             db_adaptor = self.db_adaptor
 
         result = ()
-        children = db_adaptor.gs_get_children(self.global_table_name, set_hash)        
+        children = db_adaptor.gs_get_children(self.global_table_name, set_hash)
         for child_hash in children:
             if child_hash == None:
                 return (None, None)
@@ -171,13 +203,13 @@ class PatternSolver:
                 child.value = False
             else:
                 # get the body from the db
-                set_data = db_adaptor.gs_get_set_data(self.global_table_name, child_hash)                
+                set_data = db_adaptor.gs_get_set_data(self.global_table_name, child_hash)
                 if set_data == None:
                     return (None, None)
 
                 child = Set(set_data['body'])
                 child.computed_hash = child_hash
-            
+
             result = result + (child, )
 
         return result
@@ -199,7 +231,13 @@ class PatternSolver:
             return db_adaptor.gs_is_hash_solved(self.global_table_name, set_hash)
         return self.solved_sets.get(set_hash, False)
 
-    def save_parent_children(self, cnf_set, child1_hash, child2_hash, db_adaptor=None):        
+    def save_parent_children(self, cnf_set, child1_hash, child2_hash, db_adaptor=None):
+
+
+        # Don't waste time
+        if not self.args.use_global_db:
+            return SUCCESS
+
         if db_adaptor == None:
             db_adaptor = self.db_adaptor
 
@@ -224,8 +262,8 @@ class PatternSolver:
                                          child2_hash,           # child 2 hash
                                          [],                    # mapping, to be added
                                          len(cnf_set.clauses),  # count of clauses
-                                         num_of_vars)  
-                                         
+                                         num_of_vars)
+
         return SUCCESS
 
     def get_node_subgraph_stats(self, node_id, nodes_children, node_descendants, node_redundants):
@@ -235,27 +273,86 @@ class PatternSolver:
             return
         else:
             node_descendants[node_id] = 1
-                    
+
         for child_id in nodes_children[node_id]:
             self.get_node_subgraph_stats(child_id, nodes_children, node_descendants, node_redundants)
 
 
-    def construct_graph_stats(self, root_id, nodes_children):
-        root_node_redundants = {}
+    def do_get_node_subgraph_stats(self, root_id, node_ids, nodes_children):
 
-        for node_id in self.nodes_children.keys():
+        result = []
+
+        for node_id in node_ids:
             node_descendants = {}
             node_redundants = defaultdict(int)
             self.get_node_subgraph_stats(node_id, nodes_children, node_descendants, node_redundants)
-            self.nodes_stats[node_id][UNIQUE_COUNT]     = len(node_descendants)
-            self.nodes_stats[node_id][REDUNDANT_COUNT]  = len(node_redundants)
-            self.nodes_stats[node_id][REDUNDANT_HITS]   = sum(node_redundants.values())
+            result.append( (node_id, len(node_descendants), len(node_redundants), sum(node_redundants.values()), (node_redundants if node_id == root_id else None)) )
 
-            if node_id == root_id:
-                root_node_redundants = node_redundants
+        return result
+
+
+    def construct_graph_stats(self, root_id, nodes_children, max_threads):
+
+        root_node_redundants = {}
+
+        max_stats = 1 if max_threads < 2 else max_threads if max_threads < 12 else 12
+        split_count = 100000
+
+        keys = []
+        subkeys = []
+
+        for node_id in self.nodes_children.keys():
+            subkeys.append(node_id)
+            if len(subkeys) >= split_count:
+                keys.append(subkeys)
+                subkeys = []
+
+        if len(subkeys):
+            keys.append(subkeys)
+
+        if self.args.verbos:
+            print("Generate Stats within ", len(keys), " processes each per ", split_count, " ids ...")
+
+        threads = []
+        finished_stats = 0
+
+        while len(keys) and (len(threads) < max_threads):
+            rps = RemotePatternSolver.remote(PatternSolver(args=PatternSolverArgs()))
+            threads.append(rps.do_get_node_subgraph_stats.remote(root_id, keys.pop(0), nodes_children))
+
+        while len(threads):
+            done_id, threads = ray.wait(threads)
+            results = ray.get(done_id[0])
+
+            for result in results:
+                node_id, len_node_descendants, len_node_redundants, sum_node_redundants_values, res_root_node_redundants = result
+
+                if not self.nodes_stats[node_id]:
+                    self.nodes_stats[node_id][UNIQUE_COUNT]     = 0
+                    self.nodes_stats[node_id][REDUNDANT_COUNT]  = 0
+                    self.nodes_stats[node_id][REDUNDANT_HITS]   = 0
+
+                self.nodes_stats[node_id][UNIQUE_COUNT]     += len_node_descendants
+                self.nodes_stats[node_id][REDUNDANT_COUNT]  += len_node_redundants
+                self.nodes_stats[node_id][REDUNDANT_HITS]   += sum_node_redundants_values
+
+                if res_root_node_redundants is not None:
+                    root_node_redundants = res_root_node_redundants
+
+            while len(keys) and (len(threads) < max_threads):
+                rps = RemotePatternSolver.remote(PatternSolver(args=PatternSolverArgs()))
+                threads.append(rps.do_get_node_subgraph_stats.remote(root_id, keys.pop(0), nodes_children))
+
+            finished_stats += 1
+
+            if self.args.verbos:
+                print("Finished Stats processes: ", finished_stats)
+
+        if self.args.verbos:
+            print()
 
         return root_node_redundants
-    
+
     def save_in_global_db(self, root_redundants):
 
         for node_id in self.nodes_stats.keys():
@@ -263,24 +360,22 @@ class PatternSolver:
             redundant_nodes = self.nodes_stats[node_id][REDUNDANT_COUNT]
             redundant_hits  = self.nodes_stats[node_id][REDUNDANT_HITS]
             self.db_adaptor.gs_update_count(self.global_table_name, unique_nodes, redundant_nodes, redundant_hits, node_id)            
-            
+
         # saving redundants hits for redundant nodes
         for red_id, redundant_times  in root_redundants.items():
             self.db_adaptor.gs_update_redundant_times(self.global_table_name, redundant_times, red_id)
 
 
-    def process_nodes_queue(self, cnf_set, input_mode, dot, generate_threads=False, name="main", qu=None, sort_by_size=False, thief_method=False):
+    def process_nodes_queue(self, cnf_set, input_mode, dot, generate_threads=False, name="main", is_sub_process=False, sort_by_size=False, thief_method=False, break_on_squeue_size=0):
 
         nodes_children = {}
         is_satisfiable = False
         solution = None
         starting_len = len(cnf_set.clauses)
-        
+
         db_adaptor = self.db_adaptor
-        try:            
-            if self.args.use_runtime_db or self.args.use_global_db:
-                db_adaptor = DbAdapter()
-            squeue = SuperQueue.SuperQueue(use_runtime_db=self.use_runtime_db, problem_id=cnf_set.get_hash().hex())
+        try:
+            squeue = SuperQueue.SuperQueue(name=name, use_runtime_db=self.use_runtime_db, problem_id=cnf_set.get_hash().hex())
             squeue.insert(cnf_set)
             nodes_children[cnf_set.id] = []
 
@@ -288,12 +383,13 @@ class PatternSolver:
             logger.error("DB Error: " + str(error))
             logger.critical("Error - {0}".format(traceback.format_exc()))
             db_adaptor = None
-            if qu:
-                qu.put((None, None, None), False)
+            if is_sub_process:
+                return None, None, None
             return False
 
-        while not squeue.is_empty() and not (bool(solution) & self.args.exit_upon_solving):
-            cnf_set = squeue.pop()            
+        while not squeue.is_empty() and (not (is_sub_process and break_on_squeue_size > 0 and squeue.size() >= break_on_squeue_size)) and (not (bool(solution) & self.args.exit_upon_solving)):
+
+            cnf_set = squeue.pop()
             logger.debug("Set #{0}".format(cnf_set.id))
 
             ## Evaluate
@@ -308,13 +404,15 @@ class PatternSolver:
                     logger.info("children pulled from gdb")
                     self.nodes_found_in_gdb += 1
                     children_pulled_from_gdb = True
-            
+
+            # TIME CONSUMER 1 sec
             if not children_pulled_from_gdb:
                 (s1, s2) = cnf_set.evaluate()
-            
+
             for child in (s1, s2):
+                # TIME CONSUMER 0.1 sec
                 child_str_before = child.to_string()
-                
+
                 # check if the set is already evaluated to boolean value
                 if child.value != None:
                     child.status = NODE_EVALUATED
@@ -326,24 +424,26 @@ class PatternSolver:
                         solution = dict(sorted(solution.items()))
                         if self.args.verbos:
                             logger.info(f"\nProcess '{name}' found the solution!\n")
-                
+
                 else:
                     if not children_pulled_from_gdb:
-                        child.to_lo_condition(input_mode, sort_by_size, thief_method)
+                        # TIME CONSUMER 1+ sec
+                        child.to_lo_condition((self.args.start_mode if generate_threads or (break_on_squeue_size > 0) else input_mode), sort_by_size, thief_method)
+                        # TIME CONSUMER 0.1 sec
                         child_hash = child.get_hash(force_recalculate=True)
-                    
+
                     # if chid pulled from gdb, no need to recompute the hash to save time
                     child_hash = child.get_hash()
                     child.id = child_hash
                     # check if we have processed the set before
-                    if nodes_children.get(child_hash, False) != False:                        
+                    if nodes_children.get(child_hash, False) != False:
                         child.status = NODE_REDUNDANT
-                    else:                
+                    else:
                         child.status = NODE_UNIQUE
-                        
+
                 child_str_after = child.to_string()
                 child_hash = child.get_hash()
-                
+
                 if child.status == NODE_UNIQUE:
                     self.uniques += 1
                     nodes_children[child.id] = []
@@ -380,104 +480,135 @@ class PatternSolver:
                 for child in (s1, s2):
                     if child.status == NODE_UNIQUE:
                         squeue.insert(child)
+                        #if max_threads > 0 and master_threads and len(master_threads) < max_threads:
+                        #    print()
 
             elif global_save_status == DB_UNIQUE_VIOLATION:
                 logger.debug("Node #{} is already found 'during execution' in global DB.".format(cnf_set.id))
-            
+
             # if both children are boolean, then cnf_set is a leaf node
             if s1.value != None and s2.value != None:
                 self.leaves.append(cnf_set.id)
 
-            if self.args.verbos:
+            if False and self.args.verbos:
                 print(f"Process '{name}': Progress {round((1-len(cnf_set.clauses)/starting_len)*100)}%, nodes so far: {self.uniques:,} uniques and {self.redundant_hits:,} redundant hits...", end='\r')
-           
+
+            if self.args.verbos and (len(nodes_children) % 20 == 0): # and not is_sub_process:
+                print(f"Process '{name}': Progress {round((1-len(cnf_set.clauses)/starting_len)*100)}% | nodes: {len(nodes_children)} | squeue: {squeue.size()} | uniques: {self.uniques:,} | redunt: {self.redundant_hits:,}...", end='\r')
+
             # if number of running threads less than limit and less than queue size, create a new thread here and call process_nodes_queue
-            if generate_threads and (len(self.threads) < self.max_threads) and (self.max_threads == squeue.size()):
-                generate_threads = False
-                logger.info("\n")
-                threads_to_create = self.max_threads - len(self.threads)
-                #mp.set_start_method('spawn')
-                
-                for i in range(0, threads_to_create):
+            if generate_threads and (squeue.size() >= (self.max_threads if self.max_threads < 32 else 32)):
+
+                if squeue.size() > 1.5 * self.max_threads:
+                    generate_threads = False
+
+                print()
+                threads_to_create = squeue.size() if squeue.size() < self.max_threads else self.max_threads
+
+                for n in range(0, threads_to_create):
+                    i = self.started_processes
+                    self.started_processes=self.started_processes + 1
+
+                    print(f"Creating process {i}")
                     cnf_set = squeue.pop()
-                    mpqueue = mp.Queue(1024*1024*1024)
-                    T = mp.Process(target=self.process_nodes_queue, args=(cnf_set, input_mode, dot, False, f'Process #{i}', mpqueue, sort_by_size, thief_method), name=f'Process #{i}')
-                    #T = threading.Thread(target=self.process_nodes_queue, args=(cnf_set, input_mode, dot, False,f'Thread #{i}'), name=f'Thread #{i}')
-                    T.qu = mpqueue
-                    T.node = cnf_set
-                    self.threads.append(T)
+                    rps = RemotePatternSolver.remote(PatternSolver(args=PatternSolverArgs(self.args)), name=f'Process #{i}', node=cnf_set)
+                    self.threads.append(rps.process_nodes_queue.remote(input_mode=input_mode, dot=dot, sort_by_size=sort_by_size, thief_method=thief_method, break_on_squeue_size=(8 if generate_threads else 0)))
 
-                for i in range(0, threads_to_create):
-                    logger.info(f"Creating process {i}")
-                    self.threads[i].start()
+                    # mpqueue = mp.Queue(1024*1024*1024)
+                    # T = mp.Process(target=self.process_nodes_queue, args=(cnf_set, input_mode, dot, False, f'Process #{i}', mpqueue), name=f'Process #{i}')
+                    # T.qu = mpqueue
+                    # T.node = cnf_set
+                    # self.threads.append(T)
 
-                i = 0
-                while self.threads:
-                    try:
-                        i = i % len(self.threads)
-                        process_is_satisfiable, process_nodes_children, process_solution = self.threads[i].qu.get(False)                        
-                        logger.info(f"\n{self.threads[i].name} queue is retrieved.")   
-                        self.threads[i].join()                        
-                        logger.info(f"\n{self.threads[i].name} finished!")
 
-                        # in case the child process exited before it solve the problem, and get the main process to solve it
-                        if process_nodes_children == None and not process_solution:
-                            squeue.insert(self.threads[i].node)
-                        else:
-                            #nodes_children.update(process_nodes_children)
-                            for k in process_nodes_children.keys():
-                                if nodes_children.get(k, False) and len(nodes_children[k]) >= len(process_nodes_children[k]):
-                                    continue
-                                nodes_children[k] = process_nodes_children[k]
+                while len(self.threads):
 
-                            if process_is_satisfiable != None:
-                                is_satisfiable |= process_is_satisfiable
-                            
-                            #solution = process_solution
-                            if process_solution:
-                                solution = process_solution
-                                if self.args.exit_upon_solving:
-                                    logger.info("Terminating all processes....")
-                                    for t in self.threads:
-                                        try:
-                                            t.terminate()
-                                            t.join()
-                                        except:
-                                            pass
-                                    break
-                            
-                            self.threads.pop(i)
+                    done_id, self.threads = ray.wait(self.threads)
+                    rps, process_squeue, process_is_satisfiable, process_nodes_children, process_solution = ray.get(done_id[0])
 
-                    except queue.Empty:
-                        time.sleep(1)                        
-                        i += 1
-                                        
-                logger.info("\nAll processes are completed!")
-                
-        
-        if qu:
-            qu.put((is_satisfiable, nodes_children, solution), False)
-            logger.info(f"\nProcess {name} data is sent to the main process")
+                    print()
+                    print(f"{rps.name} queue is retrieved.")
+                    print()
+                    print(f"{rps.name} finished!")
+
+                    # Return to db after serialization
+                    process_squeue.relink_db()
+
+                    # in case the child process exited before it solve the problem, and get the main process to solve it
+                    if process_nodes_children == None and not process_solution:
+                        squeue.insert(rps.node)
+                    else:
+                        for k in process_nodes_children.keys():
+                            if nodes_children.get(k, False) and len(nodes_children[k]) >= len(process_nodes_children[k]):
+                                continue
+                            nodes_children[k] = process_nodes_children[k]
+
+                        if process_is_satisfiable != None:
+                            is_satisfiable |= process_is_satisfiable
+
+                        #solution = process_solution
+                        if process_solution:
+                            solution = process_solution
+                            if self.args.exit_upon_solving:
+                                print("Terminating all processes....")
+                                # for t in self.threads:
+                                #    try:
+                                #    except:
+                                #        pass
+                                break
+
+                    # check for not ready sub queue
+                    while (process_squeue.size() > 0):
+                        squeue.insert(process_squeue.pop())
+
+                    if self.args.verbos and not is_sub_process:
+                        print(f"Process '{name}': Progress {round((1-len(cnf_set.clauses)/starting_len)*100)}% | nodes: {len(nodes_children)} | squeue: {squeue.size()} | uniques: {self.uniques:,} | redunt: {self.redundant_hits:,}...", end='\r')
+
+                    # when no more thread should be generate, check and run if more work is available
+                    if not generate_threads:
+                        while (len(self.threads) < self.max_threads) and (squeue.size() > 0):
+                            i = self.started_processes
+                            self.started_processes=self.started_processes + 1
+
+                            print(f"Creating process {i}")
+                            cnf_set = squeue.pop()
+                            rps = RemotePatternSolver.remote(PatternSolver(args=PatternSolverArgs(self.args)), name=f'Process #{i}', node=cnf_set)
+                            self.threads.append(rps.process_nodes_queue.remote(input_mode=input_mode, dot=dot, sort_by_size=sort_by_size))
+
+
+                print()
+                print("All processes are completed!")
+
+
+        if is_sub_process:
+            print()
+            print(f"Process {name} data is sent to the main process")
+            print(f"Process {name} is completed!")
+            # remove the DBAdapter() while not serializable
+            squeue.unlink_db()
+            # return serializable values
+            return squeue, is_satisfiable, nodes_children, solution
         else:
             self.is_satisfiable = is_satisfiable
             self.nodes_children = nodes_children
             self.solution       = solution
+            print()
+            print(f"Process {name} is completed!")
 
-        logger.info(f"\nProcess {name} is completed!")
-        
-                    
+
 
     def solve_set(self, root_set):
-        
+
         start_time = time.time()
-        
+        eval_time = None
+
         logger.info(f"Solving problem ID: {self.problem_id}")
 
-        # graph drawing        
+        # graph drawing
         graph_attr={}
         graph_attr["splines"] = "polyline"
         dot = Digraph(comment='The CNF Tree', format='svg', graph_attr=graph_attr)
-        
+
         logger.debug("Set #1 - to root set to {} mode".format(self.args.mode))
         setbefore = root_set.to_string()
 
@@ -495,10 +626,13 @@ class PatternSolver:
             input_mode = MODE_LOU
 
         self.uniques += 1
+
+        # db_adaptor = DbAdapter() if self.use_db_adaptor else None
+
         # use global sets table
         if self.args.use_global_db:
             # create the table if not exist
-            self.db_adaptor.gs_create_table(self.global_table_name)
+            db_adaptor.gs_create_table(self.global_table_name)
             if not self.args.gdb_no_mem:
                 self.load_set_records(len(root_set.clauses))
 
@@ -519,17 +653,19 @@ class PatternSolver:
             # I used a queue to pass the result of each process at the end of its execution. This worked very well!
 
             if self.max_threads:
-                logger.info(f"Number of forked process = {self.max_threads}")            
-            
+                logger.info(f"Number of forked process = {self.max_threads}")
+
             # main function to process the root node
             self.process_nodes_queue(root_set, input_mode, dot, bool(self.max_threads), sort_by_size=self.args.sort_by_size, thief_method=self.args.thief_method)
-            
+
+            eval_time = time.time()
+
             if self.max_threads:
                 logger.info("Multi process execution is finished!")
 
             ### Solving the set is done, let's get the number of unique and redundant nodes
-            if self.args.verbos:                
-                logger.info("\n=== Set has been solved successfully.")                
+            if self.args.verbos:
+                logger.info("\n=== Set has been solved successfully.")
 
             if not self.args.no_stats:
                 if self.args.verbos:
@@ -539,8 +675,8 @@ class PatternSolver:
                 logger.info(f"Setting recursion limit to {sys.getrecursionlimit() * 2}")
 
                 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
-                root_redundants = self.construct_graph_stats(root_set.id, self.nodes_children)
-                
+                root_redundants = self.construct_graph_stats(root_set.id, self.nodes_children, self.max_threads)
+
                 self.uniques = self.nodes_stats[root_set.id][UNIQUE_COUNT]
                 self.redundants = self.nodes_stats[root_set.id][REDUNDANT_COUNT]
                 self.redundant_hits = self.nodes_stats[root_set.id][REDUNDANT_HITS]
@@ -553,13 +689,17 @@ class PatternSolver:
                         logger.info("=== Saving the final result in the global DB...")
 
                     self.save_in_global_db(root_redundants)
-            
+
         else:
-            
-            if self.args.verbos:                
+
+            if self.args.verbos:
                 logger.info("Input set is found in the global DB")
                 logger.info("Pulling Set's data from the DB...")
             self.nodes_found_in_gdb = 1
+            if db_adaptor is None:
+                self.uniques = -1
+                self.redundants = -1
+                self.redundant_hits = -1
             set_data = self.db_adaptor.gs_get_set_data(self.global_table_name, setafterhash)
             self.uniques = set_data["unique_nodes"]
             self.redundants = set_data["redundant_nodes"]
@@ -570,14 +710,15 @@ class PatternSolver:
         process = psutil.Process(os.getpid())
         memusage = process.memory_info().rss  # in bytes
         stats = 'Input set processed in %.3f seconds' % (time.time() - start_time)
+        stats += '\\n' + 'Computation in %.3f seconds' % (eval_time - start_time)
         stats += '\\n' + "Problem ID: {0}".format(self.problem_id)
         stats += '\\n' + "Solution mode: {0}".format(self.args.mode.upper())
         stats += '\\n' + "The input set is {0}".format(str_satisfiable)
         if self.is_satisfiable:
             stats += '\\n' + "The solution is {0}".format(self.solution)
-        
+
         stats += '\\n' + f"Number of unique nodes: {len(self.nodes_children):,}"
-        if not self.args.no_stats:            
+        if not self.args.no_stats:
             stats += '\\n' + "Number of redundant subtrees: {0}".format(self.redundants)
             stats += '\\n' + "Number of redundant hits: {0}".format(self.redundant_hits)
             stats += '\\n' + "Number of nodes found in gdb: {0}".format(self.nodes_found_in_gdb)
@@ -657,8 +798,8 @@ class PatternSolver:
             if v == True:
                 true_vars.append(k)
             else:
-                false_vars.append(k) 
-           
+                false_vars.append(k)
+
         for s in CnfSet.clauses:
             result = False
             for v in s.raw:
@@ -667,5 +808,5 @@ class PatternSolver:
 
             if not result:
                 return False
-                        
+
         return True
