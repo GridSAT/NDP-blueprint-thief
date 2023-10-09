@@ -114,7 +114,7 @@ class PatternSolverArgs:
         self.verify = args.verify if args else False
         self.very_verbos = args.very_verbos if args else False
         self.sort_by_size = args.sort_by_size if args else False
-        self.thief_method = args.thief_method if args else False
+        self.thief_method = args.thief_method if args else None
 
 
 class PatternSolver:
