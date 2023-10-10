@@ -147,7 +147,7 @@ python3 main.py -v -d inputs/[CNF/DIMACS] -m lou -t 8
 
 The main process connects automatically to the head node and uses workers as available.
 
-### Run solver for FACT or MULT most efficiently (e.g. DIMACS format with l.o.u. condition and thief-method in verbos on 8 cores)
+### Run solver for FACT most efficiently (e.g. DIMACS format with l.o.u. condition and thief-method in verbos on 8 cores)
 
 ```bash
 python3 main.py -v -d inputs/[CNF/DIMACS in Sabry-format] -m lou -thief -t 8
