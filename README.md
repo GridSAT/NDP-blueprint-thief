@@ -96,7 +96,6 @@ cd <path_to_directory>
 virtualenv <dir_name>
 ```
 
-
 ### Activate and update virtualenv
 
 Login as user and run
@@ -113,13 +112,15 @@ pip install -r requirements.txt
 
 https://github.com/ray-project/ray
 
+
 ### Startup the RAY nodes to allow multi-processing on cluster
 
 Using [ray](https://docs.ray.io) for upscaling the showcase.
 
 The installation is already done after pip install from previous steps
 
-##### Start the head node
+
+##### Start head node
 
 ```bash
 export RAY_DISABLE_IMPORT_WARNING=1
@@ -127,7 +128,7 @@ CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 4 ))
 ray start --head --include-dashboard=false --num-gpus=0 --num-cpus=$CPUS
 ```
 
-##### Start the additional nodes
+##### Start additional nodes
 
 ```bash
 export RAY_DISABLE_IMPORT_WARNING=1
@@ -145,9 +146,7 @@ To add more worker nodes just run same on additional nodes
 python3 main.py -v -d inputs/[CNF/DIMACS] -m lou -t 8
 ```
 
-The main process connects automatically to the head node and uses workers as available.
-
-### Run solver for FACT most efficiently (e.g. DIMACS format with l.o.u. condition and thief-method in verbos on 8 cores)
+### Run solver for FACT most efficiently, e.g., [DIMACS-Sabry input](https://cgi.luddy.indiana.edu/~sabry/cnf.html) with l.o.u. condition and thief-method in verbos on 8 cores)
 
 ```bash
 python3 main.py -v -d inputs/[CNF/DIMACS in Sabry-format] -m lou -thief -t 8
