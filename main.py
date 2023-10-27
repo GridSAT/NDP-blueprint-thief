@@ -151,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--output-graph-file", type=str, help="Output graph file in Graphviz format")
     parser.add_argument("-s", "--output-solution-file", action="store_true", help="Output solution file.")
     parser.add_argument("-ns", "--no-stats", help="Short concise output. No stats about unique numbers and other information. This will disable the global database option.", action="store_true")
-    parser.add_argument("-t", "--threads", type=int, help="Number of threads. Value 1 means no multithreading, 0 means max concurrent threads on the machine. This option will implicitly enable the global DB.", default=0)
+    parser.add_argument("-t", "--threads", type=int, help="Number of threads. Value 1 means no multithreading, 0 means max concurrent threads on the machine. This option will implicitly enable the global DB.", default=1)
     parser.add_argument("-e", "--exit-upon-solving", help="Exit whenever a solution is found.", action="store_true")
     parser.add_argument("-verify", "--verify", help="Verify the solution at the end, if any.", action="store_true")
     parser.add_argument("-rdb", "--use-runtime-db", help="Use database for set lookup in table established only for the current cnf", action="store_true")
