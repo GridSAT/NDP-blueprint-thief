@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     class Formatter(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter): pass
-    parser = argparse.ArgumentParser(description="NasserSatSolver [OPTIONS]", formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description="NDP [OPTIONS]", formatter_class=argparse.RawTextHelpFormatter)
     group1 = parser.add_mutually_exclusive_group()
     group1.add_argument("-v", "--verbos", help="Verbos", action="store_true")
     group1.add_argument("-vv", "--very-verbos", help="Very verbos", action="store_true")
