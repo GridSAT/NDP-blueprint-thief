@@ -24,4 +24,4 @@ ordered_set
 psutil
 psycopg2
 graphviz
-ray
+ray[default]
