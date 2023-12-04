@@ -95,7 +95,7 @@ class RemotePatternSolver():
         return self.pattern_solver.do_get_node_subgraph_stats(root_id, node_ids, nodes_children)
 
     def process_nodes_queue(self, input_mode=None, dot=None, sort_by_size=False, thief_method=False, break_on_squeue_size=0):
-        return (self,) + self.pattern_solver.process_nodes_queue(self.node, input_mode, dot, generate_threads=False, name=self.name, is_sub_process=True, sort_by_size=sort_by_size, thief_method=True, break_on_squeue_size=break_on_squeue_size)
+        return (self,) + self.pattern_solver.process_nodes_queue(self.node, input_mode, dot, generate_threads=False, name=self.name, is_sub_process=True, sort_by_size=sort_by_size, thief_method=thief_method, break_on_squeue_size=break_on_squeue_size)
 
 
 class PatternSolverArgs:
@@ -573,7 +573,7 @@ class PatternSolver:
                             print(f"Creating process {i}")
                             cnf_set = squeue.pop()
                             rps = RemotePatternSolver.remote(PatternSolver(args=PatternSolverArgs(self.args)), name=f'Process #{i}', node=cnf_set)
-                            self.threads.append(rps.process_nodes_queue.remote(input_mode=input_mode, dot=dot, sort_by_size=sort_by_size))
+                            self.threads.append(rps.process_nodes_queue.remote(input_mode=input_mode, dot=dot, sort_by_size=sort_by_size, thief_method=thief_method))
 
 
                 print()
