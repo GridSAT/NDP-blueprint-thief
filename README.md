@@ -74,21 +74,28 @@ Please check the [Resources](https://gridsat.eth.link/resources.html) on this si
 
 
 
-### Non-Deterministic Processor (NDP) blueprint with Ray
 
-### Installation
+## NDP LINUX Installationblueprint with Ray
 
-##### Prepare system virtualenv
 
-On linux run as root
+### Install NDP
+
+
+to [DIRECTORY], e.g.: NDP
+git clone https://github.com/YOUR-USERNAME/NDP-blueprint-thief or download .zip from: https://github.com/GridSAT/NDP-blueprint-thief/tree/Ray
+
+#### Prepare system virtualenv
+
+screen session (best practice), e.g.:
+```bash
+screen -S NDP
+```
 
 ```bash
 apt install python3-pip libpq-dev sysstat
 ```
 
-##### Create virtualenv
-
-Log-in as user and run
+##### Create virtual environment (virtualenv)
 
 ```bash
 cd <path_to_directory>
@@ -96,9 +103,7 @@ cd <path_to_directory>
 virtualenv <dir_name>
 ```
 
-### Activate and update virtualenv
-
-Login as user and run
+##### Activate and update virtualenv
 
 ```bash
 cd <path_to_directory>
@@ -108,57 +113,75 @@ source <dir_name>/bin/activate
 pip install -r requirements.txt
 ```
 
-### Install Ray
+#### Install Ray and other tools
 
-https://github.com/ray-project/ray
+```bash
+pip install -r requirements.txt
+```
 
-
-### Startup the RAY nodes to allow multi-processing on cluster
-
-Using [ray](https://docs.ray.io) for upscaling the showcase.
-
-The installation is already done after pip install from previous steps
+For further info on Ray check [Ray Repo](https://github.com/ray-project/ray) and the [Ray documentation](https://docs.ray.io).
 
 
-##### Start head node
 
+#### Startup the RAY for multi-processing on cluster
+
+
+##### Start head node without Ray Dashboard
+
+Example initialization with 4 CPUs as system reserves - configure as appropriate:
 ```bash
 export RAY_DISABLE_IMPORT_WARNING=1
 CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 4 ))
-ray start --head --include-dashboard=false --num-gpus=0 --num-cpus=$CPUS
+ray start --head --include-dashboard=false --disable-usage-stats --num-gpus=0 --num-cpus=$CPUS
 ```
 
-##### Start additional nodes
+##### Start head node with Ray Dashboard
 
+Example initialization with 4 CPUs as system reserves - configure as appropriate:
 ```bash
 export RAY_DISABLE_IMPORT_WARNING=1
 CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 4 ))
-ray start --include-dashboard=false --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gpus=0 --num-cpus=$CPUS
+ray start --head --include-dashboard=true --dashboard-host=0.0.0.0 --disable-usage-stats --num-gpus=0 --num-cpus=$CPUS
 ```
 
-To add more worker nodes just run same on additional nodes
+##### Start worker nodes
 
+Example initialization with 2 CPUs system reserves - configure as appropriate:
+```bash
+export RAY_DISABLE_IMPORT_WARNING=1
+CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 2 ))
+ray start --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gpus=0 --num-cpus=$CPUS
+```
 
+### Run solver
 
-### Run solver (e.g. DIMACS format with l.o.u. condition in verbos on 8 cores)
+Example in verbos with L.O.U. condition, max #CPUs, sort by size for best MULT-circuit of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html) ,
+and output verification (more info available in published paper [resources](https://gridsat.eth.link/index.html) and via NDP help):
 
 ```bash
-python3 main.py -v -d inputs/[CNF/DIMACS] -m lou -t 8
+python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -z -verify
 ```
 
-### Run solver for FACT most efficiently, e.g., [DIMACS-Sabry input](https://cgi.luddy.indiana.edu/~sabry/cnf.html) with l.o.u. condition and thief-method in verbos on 8 cores)
+Example in verbos with L.O.U. condition, 256 #CPUs, -thief for best FACT of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html), and output verification:
 
 ```bash
-python3 main.py -v -d inputs/[CNF/DIMACS in Sabry-format] -m lou -thief -t 8
+python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -thief -t 256 -verify
 ```
 
-The main process connects automatically to the head node and uses workers as available.
+
+### NDP help
+
+```bash
+python3 main.py -h
+```
+
+Note: NDP also runs on single machine without Ray - just "Run Solver" and skip starting Ray.
 
 
 
 ### Starter tools
 
-Some helpers to easily run the processes and environments (e.g. AWS):
+Some helpers with example paths and inputs to easily run the processes and environments provided you configured your scripts (e.g. AWS):
 
 ```bash
 
