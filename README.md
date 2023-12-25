@@ -24,8 +24,8 @@ GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ 
 NDP demonstrates polynomial efficiency in solving SAT problems. This efficiency is achieved through advanced algorithms that optimize the problem-solving process, reducing the computational complexity typically associated with NP-complete problems.
 
 #### Multiprocessing and Ray Integration
-- Multiprocessing on single machines.
-- Ray framework for efficient parallel processing on multiple machine clusters.
+- Efficient multiprocessing on single machines.
+- Ray framework for efficient parallel processing on machine clusters.
 - Enables large-scale SAT problem solving.
 
 #### Optimum Idle CPU Utilization
