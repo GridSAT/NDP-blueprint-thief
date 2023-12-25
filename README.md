@@ -75,7 +75,7 @@ Please check the [Resources](https://gridsat.eth.link/resources.html) on this si
 
 
 
-## NDP LINUX Installationblueprint with Ray
+## NDP LINUX Installation with Ray
 
 
 ### Install NDP
