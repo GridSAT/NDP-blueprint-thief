@@ -57,7 +57,7 @@ from byebye import bye_art
 #   and in the evaluation loop, we call the method normalize() before to_lo_condition(). However, do we need to normalize each set? or it's just the root set?
 #   This needs to be thought of well because we don't want to add extra time in the evaluation loop if we won't need normalization except for the root set.
 #   Currently it works fine with the current implementation as it focuses only on root, but we just don't save the unnormalized version for the root set.   
-#  - enable multiple Ray Cluster
+#  - enable multiple Ray Clusters
 #  - enable GPU
 
 def display_ascii_art(ascii_art):
