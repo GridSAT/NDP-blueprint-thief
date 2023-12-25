@@ -40,7 +40,7 @@ The solver scales linearly with the addition of more computing resources maintai
 - Customizable script options for enhanced user control and experience.
 
 #### Comprehensive Statistics and Insights
-The NDP generates detailed statistics that provide insights into the solving process. Apart the verified solution, statistics include, e.g., a problem ID hash, zulu timestamp, input-file info incl. #VARs and clauses, data on unique nodes, redundant subtrees, memory usage, and number of CPUs.
+The NDP generates detailed statistics that provide insights into the solving process. Apart the verified solution, statistics include, e.g., a problem ID hash, zulu timestamp, input-file info incl. #VARs and clauses, data on unique nodes, redundant subtrees, memory usage, and # of CPUs.
 
 
 ### Concept:
