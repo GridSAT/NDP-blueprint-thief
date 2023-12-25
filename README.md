@@ -165,7 +165,7 @@ python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -z -verify
 Example in verbos with L.O.U. condition, 256 #CPUs, -thief for best FACT of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html), and output verification:
 
 ```bash
-python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -thief -t 256 -verify
+python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -thief -t256 -verify
 ```
 
 
