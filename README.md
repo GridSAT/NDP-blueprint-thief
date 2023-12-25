@@ -17,7 +17,30 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
+##
+## Non-Deterministic Processor (NDP) - SAT Solver Features
 
+#### Polynomial Efficiency
+NDP demonstrates polynomial efficiency in solving SAT problems. This efficiency is achieved through advanced algorithms that optimize the problem-solving process, reducing the computational complexity typically associated with NP-complete problems.
+
+#### Multiprocessing and Ray Integration
+- Multiprocessing on single machines.
+- Ray framework for efficient parallel processing on multiple machine clusters.
+- Enables large-scale SAT problem solving.
+
+#### Optimum Idle CPU Utilization
+The NDP architecture is designed to minimize idle CPU time. It dynamically adjusts task distribution based on available resources, ensuring that all CPUs are efficiently utilized throughout the problem-solving and statistics processes with maximized throughput in HPC environments.
+
+#### Unlimited Linear Scalability
+The solver scales linearly with the addition of more computing resources maintaining consistent performance gains.
+
+#### SAT-Solving Options and Script Customization
+- Supports various SAT-solving modes, catering to different problem classes.
+- Flexible input options: line input, file input, and DIMACS format.
+- Customizable script options for enhanced user control and experience.
+
+#### Comprehensive Statistics and Insights
+The NDP generates detailed statistics that provide insights into the solving process. Apart the verified solution, statistics include, e.g., a problem ID hash, zulu timestamp, input-file info incl. #VARs and clauses, data on unique nodes, redundant subtrees, memory usage, and number of CPUs.
 
 
 ### Concept:
@@ -70,21 +93,21 @@ Fundamental doctrines of logic ([Frege](https://en.wikipedia.org/wiki/Gottlob_Fr
 
 Putting this feature of classic Arabic into action for SAT processing reveals semantic patterns hidden behind names of variables used in CNF formulas. E.g., if indices in variable names reflect repetition lengths of 0 and 1 patterns in the truth table, it can be shown that inducing a linear order between those indices by means of simple renaming, always enables construction of small BDDs.
 
-Please check the [Resources](https://gridsat.eth.link/resources.html) on this site for a comprehensive and authentic overview.
+Please check the [Resources](https://gridsat.eth.link/resources.html) for a comprehensive and authentic overview.
 
 
 
-
+##
 ## NDP LINUX Installation with Ray
 
 
-### Install NDP
+#### Install NDP
 
 
 to [DIRECTORY], e.g.: NDP
 git clone https://github.com/YOUR-USERNAME/NDP-blueprint-thief or download .zip from: https://github.com/GridSAT/NDP-blueprint-thief/tree/Ray
 
-#### Prepare system virtualenv
+##### Prepare system virtualenv
 
 screen session (best practice), e.g.:
 ```bash
@@ -112,8 +135,8 @@ source <dir_name>/bin/activate
 
 pip install -r requirements.txt
 ```
-
-#### Install Ray and other tools
+#####
+##### Install Ray and other tools
 
 ```bash
 pip install -r requirements.txt
@@ -122,8 +145,8 @@ pip install -r requirements.txt
 For further info on Ray check [Ray Repo](https://github.com/ray-project/ray) and the [Ray documentation](https://docs.ray.io).
 
 
-
-#### Startup the RAY for multi-processing on cluster
+###
+### Startup the RAY for multi-processing on cluster
 
 
 ##### Start head node without Ray Dashboard
@@ -152,10 +175,10 @@ export RAY_DISABLE_IMPORT_WARNING=1
 CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 2 ))
 ray start --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gpus=0 --num-cpus=$CPUS
 ```
+###
+#### Run solver
 
-### Run solver
-
-Example in verbos with L.O.U. condition, max #CPUs, sort by size for best MULT-circuit of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html) ,
+Example in verbos with L.O.U. condition, max #CPUs, sort by size for best MULT-circuit of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html),
 and output verification (more info available in published paper [resources](https://gridsat.eth.link/index.html) and via NDP help):
 
 ```bash
@@ -168,8 +191,8 @@ Example in verbos with L.O.U. condition, 256 #CPUs, -thief for best FACT of [Pur
 python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -thief -t256 -verify
 ```
 
-
-### NDP help
+###
+#### NDP help
 
 ```bash
 python3 main.py -h
@@ -178,8 +201,8 @@ python3 main.py -h
 Note: NDP also runs on single machine without Ray - just "Run Solver" and skip starting Ray.
 
 
-
-### Starter tools
+####
+#### Starter tools
 
 Some helpers with example paths and inputs to easily run the processes and environments provided you configured your scripts (e.g. AWS):
 
