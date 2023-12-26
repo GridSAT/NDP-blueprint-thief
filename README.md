@@ -103,8 +103,8 @@ Please check the [Resources](https://gridsat.eth.link/resources.html) for a comp
 #### Install NDP
 
 
-to [DIRECTORY], e.g.: NDP
-git clone https://github.com/YOUR-USERNAME/NDP-blueprint-thief or download .zip from: https://github.com/GridSAT/NDP-blueprint-thief/tree/Ray
+to [DIRECTORY], e.g.: /NDP
+git clone https://github.com/YOUR-USERNAME/NDP-blueprint-thief or download .zip here
 
 ##### Prepare system virtualenv
 
