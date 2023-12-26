@@ -204,12 +204,12 @@ if __name__ == "__main__":
 	# START:
 	# if FLOP:
 	#     place unit clauses first
-	# rename vars
+	# rename VARs
 	# sort within clauses
-	# if FLO or FLOP or (LO root node only):
+	# if FLO or FLOP or (L.O. root node only):
 	#     sort clauses()
-
-	# check if it meets LO condition, if not go to step START
+	#
+	# check if it meets L.O. condition, if not go to step START
 
 
 	args = parser.parse_args()
