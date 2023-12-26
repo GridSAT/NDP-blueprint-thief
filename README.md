@@ -17,6 +17,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 GridSAT Stiftung - Georgstr. 11 - 30159 Hannover - Germany - ipfs: gridsat.eth/ - info@gridsat.io
+<br><br/>
 ##
 ## Non-Deterministic Processor (NDP) - SAT Solver Features
 
@@ -43,7 +44,7 @@ The solver scales linearly with the addition of more computing resources maintai
 The NDP generates detailed statistics that provide insights into the solving process. Apart the verified solution, statistics include, e.g., a problem ID hash, zulu timestamp, input-file info incl. #VARs and clauses, data on unique nodes, redundant subtrees, memory usage, and # of CPUs.
 
 
-### Concept:
+#### Concept:
 
 NDP is the abbreviation for [Non-Deterministic Processor](https://en.wikipedia.org/wiki/Nondeterministic_Turing_machine).
 One of the most important questions in theoretical computer science was the [P vs. NP problem](https://en.wikipedia.org/wiki/P_vs._NP_problem) asking how difficult it is to simulate non-deterministic computation with a deterministic computer.
@@ -52,13 +53,13 @@ It was called non-deterministic polynomial because a non-deterministic machine c
 NP problems were beyond computability, incl. but not limited to quantum computation which [itself](https://www.nature.com/articles/s41534-017-0035-1.pdf) is [NP-complete](https://iopscience.iop.org/article/10.1088/1367-2630/16/3/033027/pdf).
 
 
-### Impact:
+#### Impact:
 
 An NDP makes the [whole internet look like a footnote in history](https://www.researchgate.net/publication/220423686_The_Status_of_the_P_versus_NP_problem).
 It may be [as important as the discovery of fire](https://youtu.be/kiL-xAGQ8yQ).
 
 
-### Implementation:
+#### Implementation:
 
 The NDP solves any NP problem in polynomial time with [unlimited linear scalability](https://youtu.be/ldbW_PuYd6w) over multi-core deployments.
 Just as any other processor, it computes deterministically.
@@ -66,7 +67,7 @@ It processes problems formulated in [SAT](https://en.wikipedia.org/wiki/Boolean_
 BDDs are as fundamental as .txt files for word processors.
 
 
-### Theoretical background:
+#### Theoretical background:
 
 Recalling that BDDs are graph representations of boolean functions with with 2^n+1 -1 nodes being equivalent to the complete [truth table](https://en.wikipedia.org/wiki/Truth_table), we can collapse the tree in such a way, that the function can still be evaluated in the same manner, yet the resulting acyclic digraph (BDD) may be much smaller.
 Accordingly [it is known and has been severally demonstrated](http://alumni.cs.ucr.edu/~skulhari/StaticHeuristics.pdf), that the variable ordering of the respective input set can significantly impact the size of a BDD (i.e., the efficiency of generating the BDD). 
@@ -77,14 +78,14 @@ However it is further known, that finding an [optimal variable order is NP-compl
 Non-withstanding of these OBDD functions, the NDP bypasses those exponential lower bounds through [equisatisfiable translations](https://en.wikipedia.org/wiki/Equisatisfiability) enabling BDD sizes approximated by O(M^4), where M is the number of clauses of a CNF representation of the function. The average case fittings for FACT and MULT are even much more efficient when generating the CNF-input with [Paul Purdom and Amr Sabry ’s transformation](https://cgi.luddy.indiana.edu/~sabry/cnf.html). 
 
 
-### History:
+#### History:
 
 [Algebra was introduced some 1,200 years ago](https://en.wikipedia.org/wiki/Muhammad_ibn_Musa_al-Khwarizmi#Algebra). In [classic Arabic](https://www.ted.com/talks/terry_moore_why_is_x_the_unknown?utm_campaign=tedspread&utm_medium=referral&utm_source=tedcomshare) with [Arabic numerals](https://en.wikipedia.org/wiki/Arabic_numerals) in addition to 0 introduced from the [Hindu numeral system](https://en.wikipedia.org/wiki/Hindu–Arabic_numeral_system).
 While todays [elementary algebra](https://en.wikipedia.org/wiki/Elementary_algebra) symbolizes variables with Latin letters whose values are Arabic numbers, [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) only assigns true and false values, usually denoted 1 and 0 to the respective letter, e.g., X. Furthermore, subject matter Boolean functions in CNF use the logical and operator (often denoted as ∧) and the negation not (often denoted as ¬).
 Accordingly, a Boolean function contains variables and logical connectors representing its form (syntax). The meaning (semantic) of that Boolean function is represented by the ordered set of variable value combinations, i.e., by its truth table.
 
 
-### The Magic:
+#### The Magic:
 
 The relation between syntax and semantics in formal and natural languages is one of the [most debated topics in modern logics and linguistics](https://plato.stanford.edu/entries/linguistics/). Its understanding bears important consequences for both, computer science and computational linguistics.
 Fundamental doctrines of logic ([Frege](https://en.wikipedia.org/wiki/Gottlob_Frege), [Russell](https://en.wikipedia.org/wiki/Bertrand_Russell), [Tarski](https://en.wikipedia.org/wiki/Alfred_Tarski) and their followers) assume that symbols refer solely to things of the world and that reference to those things is uniquely determined by the context of a sentence, but not by any intrinsic features of the used symbols.
@@ -94,13 +95,11 @@ Fundamental doctrines of logic ([Frege](https://en.wikipedia.org/wiki/Gottlob_Fr
 Putting this feature of classic Arabic into action for SAT processing reveals semantic patterns hidden behind names of variables used in CNF formulas. E.g., if indices in variable names reflect repetition lengths of 0 and 1 patterns in the truth table, it can be shown that inducing a linear order between those indices by means of simple renaming, always enables construction of small BDDs.
 
 Please check the [Resources](https://gridsat.eth.link/resources.html) for a comprehensive and authentic overview.
-
-
-
+<br><br/>
 ##
 ## NDP LINUX Installation with Ray
 
-
+<br><br/>
 #### Install NDP
 
 
@@ -113,7 +112,7 @@ screen session (best practice), e.g.:
 ```bash
 screen -S NDP
 ```
-
+install Python 3 package manager (pip) and libraries for PostgreSQL database connections with performance monitoring tools for Linux
 ```bash
 apt install python3-pip libpq-dev sysstat
 ```
@@ -132,11 +131,9 @@ virtualenv <dir_name>
 cd <path_to_directory>
 
 source <dir_name>/bin/activate
-
-pip install -r requirements.txt
 ```
 #####
-##### Install Ray and other tools
+##### Install Ray and other required tools
 
 ```bash
 pip install -r requirements.txt
@@ -145,9 +142,9 @@ pip install -r requirements.txt
 For further info on Ray check [Ray Repo](https://github.com/ray-project/ray) and the [Ray documentation](https://docs.ray.io).
 
 
-###
-### Startup the RAY for multi-processing on cluster
-
+<br><br/>
+#### Startup RAY for multi-processing on cluster
+(*Note: NDP also runs on single machine without Ray - just go to the "Run solver" section below and skip "Startup Ray"*)
 
 ##### Start head node without Ray Dashboard
 
@@ -175,7 +172,7 @@ export RAY_DISABLE_IMPORT_WARNING=1
 CPUS=$(( $(lscpu --online --parse=CPU | egrep -v '^#' | wc -l) - 2 ))
 ray start --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gpus=0 --num-cpus=$CPUS
 ```
-###
+<br><br/>
 #### Run solver
 
 Example in verbos with L.O.U. condition, max #CPUs, sort by size for best MULT-circuit of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html),
@@ -191,17 +188,15 @@ Example in verbos with L.O.U. condition, 256 #CPUs, -thief for best FACT of [Pur
 python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -thief -t256 -verify
 ```
 
-###
+<br><br/>
 #### NDP help
 
 ```bash
 python3 main.py -h
 ```
 
-Note: NDP also runs on single machine without Ray - just "Run Solver" and skip starting Ray.
 
-
-####
+<br><br/>
 #### Starter tools
 
 Some helpers with example paths and inputs to easily run the processes and environments provided you configured your scripts (e.g. AWS):
