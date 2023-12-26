@@ -112,7 +112,7 @@ screen session (best practice), e.g.:
 ```bash
 screen -S NDP
 ```
-install Python 3 package manager (pip) and libraries for PostgreSQL database connections with performance monitoring tools for Linux
+install Python 3 package manager (pip) and libraries for PostgreSQL database connections with performance monitoring tools for Linux:
 ```bash
 apt install python3-pip libpq-dev sysstat
 ```
