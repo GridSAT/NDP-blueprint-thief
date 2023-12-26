@@ -174,7 +174,7 @@ ray start --address='MASTER-IP:6379' --redis-password='MASTER-PASSWORT' --num-gp
 #### Run solver
 
 Example in verbos with L.O.U. condition, max #CPUs, sort by size for best MULT-circuit of [Purdom-Sabry DIMACS-input format](https://cgi.luddy.indiana.edu/~sabry/cnf.html),
-and output verification (more info available in published paper [resources](https://gridsat.eth.link/index.html) and via NDP help):
+and output verification (more info available in published paper [resources](https://gridsat.eth.link/resources.html) and via NDP help):
 
 ```bash
 python3 main.py -v -d [dir_name]/[CNF/DIMACS] -m lou -z -verify
