@@ -128,8 +128,6 @@ virtualenv <dir_name>
 ##### Activate and update virtualenv
 
 ```bash
-cd <path_to_directory>
-
 source <dir_name>/bin/activate
 ```
 #####
