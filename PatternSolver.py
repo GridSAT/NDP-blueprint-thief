@@ -744,9 +744,10 @@ class PatternSolver:
 			num_vars,
 			num_clauses
 		)
-		# Concatenating Solution Mode and Thief Method
+		# Concatenating Solution Mode, Thief Method, and Sort-by-Size Option
 		thief_status = " - thief" if self.args.thief_method else ""
-		stats += '\\n' + "Solution mode: {0}{1}\n".format(self.args.mode.upper(), thief_status)
+		sort_by_size_status = " - ascending clause size order (-z)" if self.args.sort_by_size else ""
+		stats += '\\n' + "Solution mode: {0}{1}{2}\n".format(self.args.mode.upper(), thief_status, sort_by_size_status)
 
 		stats += '\\n' + "The input set is {0}\n".format(str_satisfiable)
 		if self.is_satisfiable:
