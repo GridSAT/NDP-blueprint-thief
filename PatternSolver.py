@@ -156,11 +156,11 @@ class PatternSolver:
 
 		self.seen_sets.clear()
 		self.reset()
-		
+
 		self.max_threads = self.get_cpu_count(args.threads)
-		
+
 		self.cluster_resources = cluster_resources if cluster_resources else ray.cluster_resources()
-		
+
 	def get_cpu_count(self, thread_arg):
 		if thread_arg == 0:
 			if ray.is_initialized():
@@ -611,7 +611,7 @@ class PatternSolver:
 
 		num_vars = len(root_set.get_variables())
 		num_clauses = len(root_set.clauses)
-		
+
 		# Get current UTC time and convert it to a timestamp
 		utc_now = datetime.now(timezone.utc)
 		utc_zulu_time = utc_now.strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -619,7 +619,7 @@ class PatternSolver:
 		# Start timing the entire process
 		start_time = time.time()
 		eval_time = None
-		
+
 		logger.info(f"\n\nSolving problem ID: {self.problem_id}\n")
 
 		# graph drawing
@@ -677,7 +677,7 @@ class PatternSolver:
 
 			# Stats timing
 			eval_time = time.time()
-			
+
 			if self.max_threads:
 				#logger.info("\nNon-Deterministic Processing completed!\n")
 				logger.info("CPUs utilized: {}\n".format(self.max_threads))
@@ -753,24 +753,15 @@ class PatternSolver:
 		if self.is_satisfiable:
 			stats += '\\n' + "SOLUTION: {0}\n".format(self.solution)
 
-		if self.args.factorize and self.solution:
-			nbits = len(root_set.fact_num_bits)
-			factors_bits = [int(v) for v in self.solution.values()][:nbits]
-
-			# factors length in bits
-			f1len = root_set.fact1_len
-			f2len = root_set.fact2_len
-
-			fact1 = int(''.join(str(i) for i in factors_bits[:f1len])[::-1], 2)
-			fact2 = int(''.join(str(i) for i in factors_bits[f1len:f1len+f2len])[::-1], 2)
-
-			if root_set.factorized_number == fact1 * fact2:
-				stats += '\\n' + f"FACT: {root_set.factorized_number} = {fact1} x {fact2}\n\n"
+		# Concatenating on ALL if any prime factors - else prime
+		if self.args.factorize:
+			if len(root_set.all_prime_factors) == 1 and root_set.all_prime_factors[0] == root_set.factorized_number:
+				# Number is prime
+				stats += '\\n' + f"Input number {root_set.factorized_number} is prime! (no factors)\n\n"
 			else:
-				stats += '\\n' + f"Something is wrong. Probably a bug! Input = {root_set.factorized_number}, factors found are {fact1} and {fact2}"
-
-		elif self.args.factorize:
-			stats += '\\n' + f"Input number {root_set.factorized_number} is prime! (no factors)\n\n"
+				# Display all factors
+				factorization_str = " x ".join(map(str, root_set.all_prime_factors))
+				stats += '\\n' + f"FACT: {root_set.factorized_number} = {factorization_str}\n\n"
 
 		if self.args.multiply and self.solution:
 			result_bits_values = [int(self.solution[v]) for v in root_set.multiply_result_bits]
