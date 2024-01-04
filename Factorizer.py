@@ -49,10 +49,20 @@ class Factorizer:
 				i += 1
 
 		cnf.factorized_number = factorized_number
-
+		
 		# Find all factors iteratively
 		all_factors = self.iterative_factorization(cnf.factorized_number)
 
+		
+		# Check if there are exactly two prime factors (and they are distinct)
+		if len(set(all_factors)) == 2 and len(all_factors) == 2:
+			cnf.rsa_factors = all_factors
+		else:
+			cnf.rsa_factors = None
+
+		cnf.all_prime_factors = all_factors
+		return True
+		
 		# Store all prime factors in the cnf object
 		cnf.all_prime_factors = all_factors
 
