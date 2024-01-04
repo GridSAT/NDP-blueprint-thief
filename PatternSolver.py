@@ -279,17 +279,17 @@ class PatternSolver:
 
 		return SUCCESS
 
-	def get_node_subgraph_stats(self, node_id, nodes_children, node_descendants, node_redundants):
+	def get_node_subgraph_stats_iterative(self, node_id, nodes_children, node_descendants, node_redundants):
 
-		if node_descendants.get(node_id, False):
-			node_redundants[node_id] += 1
-			return
-		else:
-			node_descendants[node_id] = 1
-
-		for child_id in nodes_children[node_id]:
-			self.get_node_subgraph_stats(child_id, nodes_children, node_descendants, node_redundants)
-
+		stack = [node_id]
+		while stack:
+			current_node_id = stack.pop()
+			if current_node_id in node_descendants:
+				node_redundants[current_node_id] += 1
+				continue
+			else:
+				node_descendants[current_node_id] = 1
+				stack.extend(nodes_children.get(current_node_id, []))
 
 	def do_get_node_subgraph_stats(self, root_id, node_ids, nodes_children):
 
@@ -298,11 +298,10 @@ class PatternSolver:
 		for node_id in node_ids:
 			node_descendants = {}
 			node_redundants = defaultdict(int)
-			self.get_node_subgraph_stats(node_id, nodes_children, node_descendants, node_redundants)
+			self.get_node_subgraph_stats_iterative(node_id, nodes_children, node_descendants, node_redundants)
 			result.append( (node_id, len(node_descendants), len(node_redundants), sum(node_redundants.values()), (node_redundants if node_id == root_id else None)) )
 
 		return result
-
 
 	def construct_graph_stats(self, root_id, nodes_children, max_threads):
 
@@ -728,8 +727,10 @@ class PatternSolver:
 		cluster_resources = ray.cluster_resources()
 		num_cpus = cluster_resources.get("CPU", 1)  # Defaults to 1 if not available
 
+		# Determine satisfiability status	
 		str_satisfiable = "NOT satisfiable."
 		if self.is_satisfiable: str_satisfiable = "SATISFIABLE!"
+
 		process = psutil.Process(os.getpid())
 		memusage = process.memory_info().rss  # in bytes
 		stats = '\\n' + "    CPU total: {}".format(int(num_cpus))
@@ -744,37 +745,50 @@ class PatternSolver:
 			num_vars,
 			num_clauses
 		)
-		# Concatenating Solution Mode, Thief Method, and Sort-by-Size Option
-		thief_status = " - thief" if self.args.thief_method else ""
-		sort_by_size_status = " - ascending clause size order (-z)" if self.args.sort_by_size else ""
-		stats += '\\n' + "Solution mode: {0}{1}{2}\n".format(self.args.mode.upper(), thief_status, sort_by_size_status)
+		# Concatenating Solution Mode, Thief Method, Sort-by-Size Option, and Exit with 1st Assignment
+		thief_status = " | thief" if self.args.thief_method else ""
+		exit_upon_solving_status = " | 1st assignment (-e)" if self.args.exit_upon_solving else ""
+		sort_by_size_status = " | ascending clause size order (-z)" if self.args.sort_by_size else ""
+		stats += '\\n' + "Solution mode: {0}{1}{2}{3}\n".format(self.args.mode.upper(), thief_status, sort_by_size_status, exit_upon_solving_status)
 
+		# Display solution if satisfiable
 		stats += '\\n' + "The input set is {0}\n".format(str_satisfiable)
 		if self.is_satisfiable:
 			stats += '\\n' + "SOLUTION: {0}\n".format(self.solution)
 
-		# Concatenating on ALL if any prime factors - else prime
+		# Handle FACT option
 		if self.args.factorize:
 			if len(root_set.all_prime_factors) == 1 and root_set.all_prime_factors[0] == root_set.factorized_number:
-				# Number is prime
+				# Display Prime
 				stats += '\\n' + f"Input number {root_set.factorized_number} is prime! (no factors)\n\n"
-			else:
+			elif hasattr(root_set, 'rsa_factors') and root_set.rsa_factors:
+			# Display RSA factors
+				stats += f"\nRSA factors of {root_set.factorized_number}: {root_set.rsa_factors[0]} x {root_set.rsa_factors[1]}\n"
+			elif len(root_set.all_prime_factors) > 1:
 				# Display all factors
 				factorization_str = " x ".join(map(str, root_set.all_prime_factors))
 				stats += '\\n' + f"FACT: {root_set.factorized_number} = {factorization_str}\n\n"
 
+		# Check if the multiply option is used and if a solution is found
 		if self.args.multiply and self.solution:
 			result_bits_values = [int(self.solution[v]) for v in root_set.multiply_result_bits]
 			result = int(''.join(str(i) for i in result_bits_values)[::-1], 2)
 
+			# Retrieve the multiplication factors provided as input arguments
 			fact1 = self.args.multiply[0]
 			fact2 = self.args.multiply[1]
+
+			# Check if the calculated result matches the multiplication of fact1 and fact2
 			if result == fact1 * fact2:
+				# If the multiplication is correct, display the result
 				stats += '\\n' + f"MULT: {fact1} x {fact2} = {result}\n\n"
 			else:
+				# If there is a discrepancy in the result, indicate a potential bug
 				stats += '\\n' + f"Something is wrong. Probably a bug! Inputs {fact1} and {fact2} don't multiply to {result}!"
 
+		# If the multiply option is used but no solution is found
 		elif self.args.multiply:
+			# Display a message indicating the input numbers cannot be multiplied based on the CNF input
 			stats += '\\n' + f"The input numbers {self.args.multiply[0]} and {self.args.multiply[1]} can't be multiplied on the input CNF."
 
 		stats += '\\n' + f"===== UNIQUE NODES: {len(self.nodes_children):,} =====\n"
