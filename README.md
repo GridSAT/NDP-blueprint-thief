@@ -114,7 +114,7 @@ screen -S NDP
 ```
 install Python 3 package manager (pip) and libraries for PostgreSQL database connections with performance monitoring tools for Linux:
 ```bash
-apt install python3-pip libpq-dev sysstat
+sudo apt install python3-pip libpq-dev sysstat
 ```
 
 ##### Create virtual environment (virtualenv)
